@@ -26,7 +26,7 @@ import { INITIAL_GROUPS, INITIAL_CONNECTIONS } from "@/data/mock-data";
 import { RemoteIcon } from "@/components/icons";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -525,5 +525,3 @@ export default function Home() {
     </SidebarProvider>
   );
 }
-
-const buttonVariants = cn;
