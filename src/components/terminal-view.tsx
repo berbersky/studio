@@ -217,7 +217,7 @@ const LogLine = ({ log }: { log: LogEntry }) => {
     )
 }
 
-const UserActivityDialog = ({ user, logs, onClose }: { user: ActiveUser | null; logs: LogEntry[]; onClose: () => void }) => {
+const UserActivityDialog = React.memo(({ user, logs, onClose }: { user: ActiveUser | null; logs: LogEntry[]; onClose: () => void }) => {
     const [urlFilter, setUrlFilter] = React.useState("");
     const [dateFilter, setDateFilter] = React.useState<Date | undefined>();
 
@@ -325,7 +325,9 @@ const UserActivityDialog = ({ user, logs, onClose }: { user: ActiveUser | null; 
             </DialogContent>
         </Dialog>
     )
-}
+});
+UserActivityDialog.displayName = 'UserActivityDialog';
+
 
 export function TerminalView() {
   const [logs, setLogs] = React.useState<LogEntry[]>([]);
@@ -398,6 +400,9 @@ export function TerminalView() {
   
   const errorLogs = React.useMemo(() => logs.filter(log => log.type === 'ERROR'), [logs]);
 
+  const handleCloseDialog = React.useCallback(() => {
+    setSelectedUser(null);
+  }, []);
 
   return (
     <>
@@ -483,7 +488,7 @@ export function TerminalView() {
           </TabsContent>
         </Tabs>
       </div>
-      <UserActivityDialog user={selectedUser} logs={logs} onClose={() => setSelectedUser(null)} />
+      <UserActivityDialog user={selectedUser} logs={logs} onClose={handleCloseDialog} />
     </>
   );
 }
