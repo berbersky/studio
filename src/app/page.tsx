@@ -113,14 +113,9 @@ export default function Home() {
     string | null
   >(null);
 
-  const [currentConnectionStatus, setCurrentConnectionStatus] = React.useState<ServerStatus>("stopped");
-
-  React.useEffect(() => {
-    if (selectedConnectionId) {
-      setCurrentConnectionStatus("stopped");
-    }
-  }, [selectedConnectionId]);
-
+  const [connectionStatuses, setConnectionStatuses] = React.useState<
+    Record<string, ServerStatus>
+  >({});
 
   const [dialogState, setDialogState] = React.useState<{
     type: "add" | "edit" | "addGroup" | "delete" | "deleteGroup" | null;
@@ -131,6 +126,9 @@ export default function Home() {
     () => connections.find((c) => c.id === selectedConnectionId) || null,
     [connections, selectedConnectionId]
   );
+  
+  const selectedConnectionStatus =
+    (selectedConnectionId && connectionStatuses[selectedConnectionId]) || "stopped";
 
   const form = useForm<z.infer<typeof connectionSchema>>({
     resolver: zodResolver(connectionSchema),
@@ -188,6 +186,11 @@ export default function Home() {
   
   const handleDeleteConnection = () => {
     if (dialogState.type === "delete" && dialogState.data) {
+      setConnectionStatuses(prev => {
+        const newStatuses = {...prev};
+        delete newStatuses[dialogState.data!.id];
+        return newStatuses;
+      });
       setConnections(connections.filter((c) => c.id !== dialogState.data!.id));
       if (selectedConnectionId === dialogState.data!.id) {
         setSelectedConnectionId(null);
@@ -222,7 +225,16 @@ export default function Home() {
       title: `Launching ${connection.name}`,
       description: `Connecting to ${connection.ip}...`,
     });
-    setCurrentConnectionStatus('running');
+    setConnectionStatuses(prev => ({...prev, [connection.id]: 'running'}));
+  };
+
+  const handleStatusChange = (status: ServerStatus) => {
+    if (selectedConnectionId) {
+      setConnectionStatuses((prev) => ({
+        ...prev,
+        [selectedConnectionId]: status,
+      }));
+    }
   };
 
   const isAddOrEdit = dialogState.type === "add" || dialogState.type === "edit";
@@ -353,7 +365,7 @@ export default function Home() {
                 </h2>
                 <Button 
                   onClick={() => launchSession(selectedConnection)}
-                  disabled={currentConnectionStatus === 'running' || currentConnectionStatus === 'paused'}
+                  disabled={selectedConnectionStatus === 'running' || selectedConnectionStatus === 'paused'}
                 >
                   <MonitorPlay className="mr-2" /> Launch Session
                 </Button>
@@ -397,8 +409,8 @@ export default function Home() {
                 )}
               </div>
               <TerminalView 
-                status={currentConnectionStatus} 
-                onStatusChange={setCurrentConnectionStatus} 
+                status={selectedConnectionStatus} 
+                onStatusChange={handleStatusChange} 
               />
             </motion.div>
           ) : (
