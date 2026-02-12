@@ -217,7 +217,7 @@ const LogLine = ({ log }: { log: LogEntry }) => {
     )
 }
 
-const UserActivityDialog = React.memo(({ user, logs, onClose }: { user: ActiveUser | null; logs: LogEntry[]; onClose: () => void }) => {
+const UserActivityDialog = ({ user, logs, onClose }: { user: ActiveUser | null; logs: LogEntry[]; onClose: () => void }) => {
     const [urlFilter, setUrlFilter] = React.useState("");
     const [dateFilter, setDateFilter] = React.useState<Date | undefined>();
 
@@ -325,8 +325,7 @@ const UserActivityDialog = React.memo(({ user, logs, onClose }: { user: ActiveUs
             </DialogContent>
         </Dialog>
     )
-});
-UserActivityDialog.displayName = 'UserActivityDialog';
+};
 
 
 export function TerminalView({ status, onStatusChange }: { status: ServerStatus, onStatusChange: (status: ServerStatus) => void }) {
@@ -335,6 +334,7 @@ export function TerminalView({ status, onStatusChange }: { status: ServerStatus,
   const [startTime, setStartTime] = React.useState<Date | null>(null);
   const scrollEndRef = React.useRef<HTMLDivElement>(null);
   const [selectedUser, setSelectedUser] = React.useState<ActiveUser | null>(null);
+  const [dialogLogs, setDialogLogs] = React.useState<LogEntry[]>([]);
 
   React.useEffect(() => {
     if (serverStatus === 'running' && !startTime) {
@@ -400,6 +400,11 @@ export function TerminalView({ status, onStatusChange }: { status: ServerStatus,
   }
   
   const errorLogs = React.useMemo(() => logs.filter(log => log.type === 'ERROR'), [logs]);
+
+  const handleShowUserActivity = (user: ActiveUser) => {
+    setDialogLogs(logs);
+    setSelectedUser(user);
+  };
 
   const handleCloseDialog = React.useCallback(() => {
     setSelectedUser(null);
@@ -467,7 +472,7 @@ export function TerminalView({ status, onStatusChange }: { status: ServerStatus,
                           <button 
                             key={user.id} 
                             className="w-full text-left bg-zinc-900/50 p-3 rounded-md text-sm hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
-                            onClick={() => setSelectedUser(user)}
+                            onClick={() => handleShowUserActivity(user)}
                             >
                               <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
@@ -489,7 +494,7 @@ export function TerminalView({ status, onStatusChange }: { status: ServerStatus,
           </TabsContent>
         </Tabs>
       </div>
-      <UserActivityDialog user={selectedUser} logs={logs} onClose={handleCloseDialog} />
+      <UserActivityDialog user={selectedUser} logs={dialogLogs} onClose={handleCloseDialog} />
     </>
   );
 }
