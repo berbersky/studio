@@ -329,18 +329,21 @@ const UserActivityDialog = React.memo(({ user, logs, onClose }: { user: ActiveUs
 UserActivityDialog.displayName = 'UserActivityDialog';
 
 
-export function TerminalView() {
+export function TerminalView({ status, onStatusChange }: { status: ServerStatus, onStatusChange: (status: ServerStatus) => void }) {
   const [logs, setLogs] = React.useState<LogEntry[]>([]);
-  const [serverStatus, setServerStatus] = React.useState<ServerStatus>('running');
+  const serverStatus = status;
   const [startTime, setStartTime] = React.useState<Date | null>(null);
   const scrollEndRef = React.useRef<HTMLDivElement>(null);
   const [selectedUser, setSelectedUser] = React.useState<ActiveUser | null>(null);
 
-
   React.useEffect(() => {
-    setLogs([{ id: Date.now(), type: 'INFO', message: 'Initializing terminal...', timestamp: new Date()}]);
-    setStartTime(new Date());
-  }, []);
+    if (serverStatus === 'running' && !startTime) {
+        setStartTime(new Date());
+        setLogs([{ id: Date.now(), type: 'INFO', message: 'Session started.', timestamp: new Date() }]);
+    } else if (serverStatus !== 'running' && startTime) {
+        setStartTime(null);
+    }
+  }, [serverStatus, startTime]);
 
   React.useEffect(() => {
     if (serverStatus !== 'running') return;
@@ -354,7 +357,7 @@ export function TerminalView() {
         };
 
         if (newLog.type === 'ERROR' && Math.random() > 0.8) {
-            setServerStatus('stopped');
+            onStatusChange('stopped');
             setLogs((prev) => [...prev, newLog, {id: Date.now() + 1, type: 'ERROR', message: 'Critical error. Server has stopped.', timestamp: new Date()}].slice(-200));
         } else {
             setLogs((prev) => [...prev, newLog].slice(-200)); // Keep last 200 logs
@@ -362,7 +365,7 @@ export function TerminalView() {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [serverStatus]);
+  }, [serverStatus, onStatusChange]);
 
   React.useEffect(() => {
     scrollEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -380,21 +383,19 @@ export function TerminalView() {
       },
     ]);
     if (!isHealthy && serverStatus !== 'stopped') {
-        setServerStatus('stopped');
+        onStatusChange('stopped');
         setLogs(prev => [...prev, {id: Date.now() + 1, type: 'ERROR', message: 'Server stopped due to health check failure.', timestamp: new Date()}]);
     }
   };
 
   const handleServerControl = (action: ServerStatus) => {
-    setServerStatus(action);
+    onStatusChange(action);
     if(action === 'running' && serverStatus !== 'running') {
-        setLogs(prev => [...prev, {id: Date.now(), type: 'INFO', message: 'Server started.', timestamp: new Date()}]);
-        setStartTime(new Date());
+        setLogs(prev => [...prev, {id: Date.now(), type: 'INFO', message: 'Server resumed.', timestamp: new Date()}]);
     } else if (action === 'paused') {
         setLogs(prev => [...prev, {id: Date.now(), type: 'INFO', message: 'Server paused. No new connections will be accepted.', timestamp: new Date()}]);
     } else if (action === 'stopped') {
         setLogs(prev => [...prev, {id: Date.now(), type: 'INFO', message: 'Server stopped.', timestamp: new Date()}]);
-        setStartTime(null);
     }
   }
   

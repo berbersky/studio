@@ -97,6 +97,8 @@ const groupSchema = z.object({
   name: z.string().min(1, "Group name is required"),
 });
 
+type ServerStatus = "running" | "paused" | "stopped";
+
 export default function Home() {
   const { toast } = useToast();
   const [groups, setGroups] = useLocalStorage<Group[]>(
@@ -110,6 +112,15 @@ export default function Home() {
   const [selectedConnectionId, setSelectedConnectionId] = React.useState<
     string | null
   >(null);
+
+  const [currentConnectionStatus, setCurrentConnectionStatus] = React.useState<ServerStatus>("stopped");
+
+  React.useEffect(() => {
+    if (selectedConnectionId) {
+      setCurrentConnectionStatus("stopped");
+    }
+  }, [selectedConnectionId]);
+
 
   const [dialogState, setDialogState] = React.useState<{
     type: "add" | "edit" | "addGroup" | "delete" | "deleteGroup" | null;
@@ -211,6 +222,7 @@ export default function Home() {
       title: `Launching ${connection.name}`,
       description: `Connecting to ${connection.ip}...`,
     });
+    setCurrentConnectionStatus('running');
   };
 
   const isAddOrEdit = dialogState.type === "add" || dialogState.type === "edit";
@@ -339,7 +351,10 @@ export default function Home() {
                 <h2 className="text-3xl font-bold tracking-tight">
                   {selectedConnection.name}
                 </h2>
-                <Button onClick={() => launchSession(selectedConnection)}>
+                <Button 
+                  onClick={() => launchSession(selectedConnection)}
+                  disabled={currentConnectionStatus === 'running' || currentConnectionStatus === 'paused'}
+                >
                   <MonitorPlay className="mr-2" /> Launch Session
                 </Button>
               </div>
@@ -381,7 +396,10 @@ export default function Home() {
                   </Card>
                 )}
               </div>
-              <TerminalView />
+              <TerminalView 
+                status={currentConnectionStatus} 
+                onStatusChange={setCurrentConnectionStatus} 
+              />
             </motion.div>
           ) : (
             <motion.div
