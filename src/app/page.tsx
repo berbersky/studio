@@ -83,6 +83,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { TerminalView } from "@/components/terminal-view";
 
 const connectionSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -380,6 +381,7 @@ export default function Home() {
                   </Card>
                 )}
               </div>
+              <TerminalView />
             </motion.div>
           ) : (
             <motion.div
