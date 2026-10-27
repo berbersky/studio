@@ -1,5 +1,5 @@
-# Firebase Studio
+# Server instance monitoring
 
-This is a NextJS starter in Firebase Studio.
+This is a NextJS app.
 
-To get started, take a look at src/app/page.tsx.
+
